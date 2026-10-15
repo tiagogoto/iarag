@@ -1,0 +1,47 @@
+
+service:
+  db:
+  image: dhi.io/pgvector:0.8-pg16-debian-dev
+  container_name: postgres_vector
+  enviroment:
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_USER: "postgres"
+    POSTGRES_DB: "rag_db"
+  ports:
+    - "5432:5432"
+  volumes:
+    - ./pgdata:/var/lib/postgresql/data
+  restart: always
+
+ollama:
+  image: ollama/ollama:latest
+  container_name: ollama_service
+  ports:
+    - "11435:11434"
+  volumes:
+    - ./ollama_data:/root/.ollama
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+  restart: always
+
+api:
+  build:
+  container_name: fastapi_rag
+  ports:
+    - "8282:8282"
+  volumes:
+   - ./data:/app/data
+  depends_on:
+   - db
+   - ollama
+  restart: always
+
+volumes:
+  pgdata:
+  ollama_data:
+  
